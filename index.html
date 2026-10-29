@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GuionEditor — Organizador de Guiones y Escaletas</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- ===== Barra lateral de proyectos ===== -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <h1 class="app-title">🎬 GuionEditor</h1>
+        <button id="newProjectBtn" class="btn btn-primary">+ Nuevo proyecto</button>
+      </div>
+      <div id="projectList" class="project-list"></div>
+      <div class="sidebar-footer">
+        <button id="exportAllBtn" class="btn btn-ghost btn-sm">💾 Exportar todo (JSON)</button>
+        <button id="importBtn" class="btn btn-ghost btn-sm">📂 Importar (JSON)</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none;">
+      </div>
+    </aside>
+
+    <!-- ===== Área principal ===== -->
+    <main id="main">
+      <!-- Estado vacío -->
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">🎬</div>
+        <h2>Todavía no tienes proyectos</h2>
+        <p>Crea tu primer proyecto para empezar a escribir guiones y escaletas.</p>
+        <button id="emptyNewProjectBtn" class="btn btn-primary">Crear proyecto</button>
+      </div>
+
+      <!-- Vista de proyecto -->
+      <div id="projectView" class="project-view" style="display:none;">
+        <header class="project-header">
+          <input type="text" id="projectName" class="project-name-input" placeholder="Nombre del proyecto">
+          <div class="project-meta">
+            <span id="projectDate" class="project-date"></span>
+            <button id="deleteProjectBtn" class="btn btn-danger btn-icon" title="Eliminar proyecto">🗑</button>
+          </div>
+        </header>
+
+        <nav class="tabs">
+          <button class="tab active" data-tab="notas">📝 Notas</button>
+          <button class="tab" data-tab="escaleta">📋 Escaleta</button>
+          <button class="tab" data-tab="guion">✍ Guion</button>
+        </nav>
+
+        <!-- ===== Blog de notas ===== -->
+        <section id="notasView" class="tab-content active">
+          <div class="content-toolbar">
+            <h3>Blog de notas</h3>
+            <button id="addNoteBtn" class="btn btn-primary btn-sm">+ Nota</button>
+          </div>
+          <p class="hint">Anota ideas, reflexiones o lo que se te ocurra. Sin formato, sin reglas — es tu espacio libre.</p>
+          <div id="notasList" class="notas-list"></div>
+          <div id="notasEmpty" class="empty-inline">
+            No hay notas todavía. Haz clic en "+ Nota" para escribir tu primera idea.
+          </div>
+        </section>
+
+        <!-- ===== Escaleta ===== -->
+        <section id="escaletaView" class="tab-content">
+          <div class="content-toolbar">
+            <h3>Escaleta — Secuencias</h3>
+            <button id="addSequenceBtn" class="btn btn-primary btn-sm">+ Secuencia</button>
+          </div>
+          <p class="hint">Escribe libremente cada secuencia. La escaleta es tu espacio para probar ideas, no tiene que ser perfecta.</p>
+          <div id="escaletaList" class="escaleta-list"></div>
+          <div id="escaletaEmpty" class="empty-inline">
+            No hay secuencias todavía. Haz clic en "+ Secuencia" para añadir la primera.
+          </div>
+        </section>
+
+        <!-- ===== Guion ===== -->
+        <section id="guionView" class="tab-content">
+          <div class="content-toolbar">
+            <h3>Guion — Formato estándar</h3>
+            <div class="guion-toolbar">
+              <span class="toolbar-hint">Tab: cambiar tipo · Enter: nueva línea · Autocompletado: Tab o Enter</span>
+              <select id="spellLangSelect" class="type-select" title="Idioma del corrector ortográfico (integrado en la página)">
+                <option value="es">🇪🇸 ES</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="">Auto</option>
+              </select>
+              <select id="elementTypeSelect" class="type-select" title="Tipo de elemento a insertar">
+                <option value="scene_heading">Escena</option>
+                <option value="action">Acción</option>
+                <option value="character">Personaje</option>
+                <option value="parenthetical">Paréntesis</option>
+                <option value="dialogue">Diálogo</option>
+                <option value="transition">Transición</option>
+                <option value="shot">Plano</option>
+              </select>
+              <button id="addElementBtn" class="btn btn-primary btn-sm">+ Línea</button>
+            </div>
+          </div>
+          <div id="guionEditor" class="guion-editor"></div>
+          <div id="guionEmpty" class="empty-inline">
+            No hay líneas de guion todavía. Haz clic aquí o en "+ Línea" para empezar una escena.
+          </div>
+          <p class="hint">El corrector ortográfico funciona desde la página (sin depender del navegador). Subraya errores en rojo en acción, paréntesis y diálogo. Cambia el idioma con el selector de arriba.</p>
+          <div class="guion-footer">
+            <button id="insertSceneBtn" class="btn btn-ghost btn-sm">+ Escena (rápido)</button>
+            <button id="exportGuionTxtBtn" class="btn btn-ghost btn-sm">📄 Exportar guion (.txt)</button>
+            <button id="exportGuionPdfBtn" class="btn btn-ghost btn-sm">📕 Exportar guion (PDF)</button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Autocompletado de personajes -->
+  <div id="autocomplete" class="autocomplete" style="display:none;"></div>
+
+  <!-- Menú de sugerencias del corrector (clic derecho) -->
+  <div id="spellMenu" class="autocomplete spell-menu" style="display:none;"></div>
+
+  <!-- Modal de confirmación -->
+  <div id="modalOverlay" class="modal-overlay" style="display:none;">
+    <div class="modal">
+      <h3 id="modalTitle">Confirmar</h3>
+      <p id="modalMessage">¿Estás seguro?</p>
+      <div class="modal-actions">
+        <button id="modalCancel" class="btn btn-ghost">Cancelar</button>
+        <button id="modalConfirm" class="btn btn-danger">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="typo.js"></script>
+  <script src="dict_es_aff.js"></script>
+  <script src="dict_es_dic.js"></script>
+  <script src="dict_en_aff.js"></script>
+  <script src="dict_en_dic.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
